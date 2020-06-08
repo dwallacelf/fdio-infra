@@ -24,10 +24,10 @@ ping_cmd="ping $ping_opts $count $1"
 token_file="$HOME/.ssh/secret_webex_teams_access_token"
 
 # Test ping command options
-ping_results=$(ping $ping_opts 1 localhost 2>&1)
-if [ -n "$?" ] ; then
+ping_test=$(ping $ping_opts 1 localhost 2>&1)
+if [[ ! "$ping_test" =~ .*"ping statistics".* ]] ; then
   echo "Error: ping options ($ping_opts) not supported by $(which ping)!"
-  echo "$ping_results"
+  echo "$ping_test"
   exit 1
 fi
 
@@ -46,7 +46,6 @@ send_notify() {
 ping_mon_exit() {
   echo
   check_for_pkt_loss
-  rm -f $logfile
   echo
   echo "So long and thanks for watching :D"
   exit 0
@@ -84,8 +83,6 @@ check_for_pkt_loss() {
   else
     echo "WARNING: ${percent_pktloss}% PACKET LOSS DETECTED on $host: $save_logfile"
   fi
-  [ -f $prev_logfile ] && rm -rf $prev_logfile;
-  prev_logfile=$logfile
 }
 
 host="$(hostname)"
@@ -97,4 +94,6 @@ while true; do
   echo -e "$host: started '$ping_cmd' at $timestamp\n-" > $logfile
   $ping_cmd >> $logfile
   check_for_pkt_loss
+  [ -f $prev_logfile ] && rm -rf $prev_logfile;
+  prev_logfile=$logfile
 done
