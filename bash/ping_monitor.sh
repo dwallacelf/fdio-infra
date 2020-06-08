@@ -12,6 +12,35 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
+#
+#  ping_monitor.sh <destination address>
+#
+#  This script runs a 'ping' based monitor in a forever loop.
+#  It redirects output of the ping command into a temporary log file
+#  with the following naming convention to allow co-mingling of
+#  multiple ping_monitor.sh instance logs in a single archive directory
+#  for ease of network outage analysis:
+#
+#  /tmp/ping_monitor.<local hostname>.<pid>.<destination address>.<start time>
+#
+#  Each 'ping' command issues 60 packets.  The log file output is
+#  parsed to determine if there were any packet loss or errors.
+#  If any packet losses or errors are detected, then the log file is
+#  moved to a file postfixed with the warning or failure discovered:
+#
+#  If any errors are found:       <log file>.ERRORS.fail.doc
+#  If 10% or more packet loss:    <log file>.PACKET_LOSS.fail.doc
+#  If less than 10% packet loss:  <log_file>.PACKET_LOSS.warn.doc
+#
+#  Only the two most recent copies of error-free log files are retained
+#  for each instance of the script to avoid filling /tmp with files
+#  that contain no issues.
+#
+#  Log rotation or archiving of errored log files are a non-feature
+#  of this script.
+#
+#  The following grep commands are useful in reviewing status of
+#  ls -l /tmp/ping*.doc  # show all logs with issues
 
 if [ -z "$1" ] ; then
   echo "Usage: $0 <ip address>"
