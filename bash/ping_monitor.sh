@@ -106,7 +106,7 @@ check_for_pkt_loss() {
   if [ -n "$failure_detected" ] ; then
     local pktloss_today="$(ls -1 $today_prefix.* | grep PACKET_LOSS.fail | wc -l)"
     local errors_today="$(ls -1 $today_prefix.* | grep ERRORS.fail | wc -l)"
-    WEBEX_TEAMS_MESSAGE="FAILURE DETECTED: $failure_detected on $host ($errors_today ERRORS.doc, $pktloss_today PACKET_LOSS.doc logs today): $save_logfile"
+    WEBEX_TEAMS_MESSAGE="FAILURE DETECTED: $failure_detected on $host ($errors_today ERRORS.fail.doc, $pktloss_today PACKET_LOSS.fail.doc logs today): $save_logfile"
     echo $WEBEX_TEAMS_MESSAGE
     send_notify
   else
