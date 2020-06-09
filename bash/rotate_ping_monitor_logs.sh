@@ -36,8 +36,9 @@ while [ -n "$1" ] ; do
   dest_host="$1"
   shift
   echo "Syncing ping_monitor logs ($log_files) from $dest_host:"
-  echo "rsync -av $dest_host$log_files $archive_dir"
-  rsync -av $dest_host:$log_files $archive_dir
+  sync_cmd="rsync -avz $dest_host:$log_files $archive_dir"
+  echo "  $sync_cmd"
+  $sync_cmd
   rc="$?"
   if [ "$rc" != "0" ] ; then
     echo "Warning: rsync returned non-zero status: $rc"
