@@ -48,5 +48,5 @@ while [ -n "$1" ] ; do
   if [ -n "$clean" ] ; then
     echo "Cleaning ping_monitor logs ($log_files) on $dest_host"
     ssh $dest_host "rm -f $log_files"
-  fi  
+  fi
 done
