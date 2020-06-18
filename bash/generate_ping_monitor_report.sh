@@ -21,8 +21,8 @@
 
 PING_MONITOR_ARCHIVE_DIR=${PING_MONITOR_ARCHIVE_DIR:-"$HOME/nomad-monitoring/ping-monitor-logs"}
 
-pktloss="PACKET-LOSS"
-errs="ERRORS"
+pktloss_tag="PACKET-LOSS"
+errors_tag="ERRORS"
 
 usage() {
   echo
@@ -55,55 +55,64 @@ else
   dates="$@"
 fi
 
-src_hosts="$(ls $arch_dir/*.doc | cut -d'_' -f2 | sort -u)"
-dst_hosts="$(ls $arch_dir/*.doc | cut -d'_' -f4 | sort -u)"
 for date_filter in $dates ; do
   verify_date $date_filter
   if [ "$?" -ne "0" ] ; then
     echo "ERROR: Invalid date filter: '$date_filter'"
   fi
+  src_hosts="$(ls $arch_dir/*${date_filter}*.doc 2> /dev/null | cut -d'_' -f2 | sort -u)"
+  dst_hosts="$(ls $arch_dir/*${date_filter}*.doc 2> /dev/null | cut -d'_' -f4 | sort -u)"
+  results_printed=0
+  echo "$date_filter Ping Monitor Failure Summary"
+  echo "======================================="
   for src in $src_hosts ; do
-    #echo "DAW src: $src"
     for dst in $dst_hosts ; do
-      #echo "DAW dst: $dst"
       filter="$arch_dir/*${src}*${dst}*${date_filter}*"
       if [ -n "$(ls $filter 2> /dev/null)" ] ; then
-        # Gather ERRORS
-        err_logs="$(ls -1 ${filter}_${errs}* 2> /dev/null)"
-        if [ -n "$err_logs" ] ; then
-          err_log_cnt="$(echo "$err_logs" | wc -l)"
-          errors="$(grep errors $err_logs | cut -d',' -f3 | cut -d' ' -f2 | cut -d'+' -f2 | sort -nu)"
-          err_min="$(echo "$errors" | head -1)"
-          err_max="$(echo "$errors" | tail -1)"
+        # Gather ERRORS results
+        errors_logs="$(ls -1 ${filter}_${errors_tag}* 2> /dev/null)"
+        if [ -n "$errors_logs" ] ; then
+          errors_log_cnt="$(echo "$errors_logs" | wc -l)"
+          errors_grep_results="$(grep errors $errors_logs)"
+          errors_results="$(echo "$errors_grep_results" | cut -d',' -f3 | cut -d' ' -f2 | cut -d'+' -f2 | sort -nu)"
+          errors_min="$(echo "$errors_results" | head -1)"
+          errors_max="$(echo "$errors_results" | tail -1)"
+          errors_loss_results="$(echo "$errors_grep_results" | cut -d',' -f4 | cut -d'%' -f1 | cut -d' ' -f2 | sort -nu)"
+          errors_loss_min="$(echo "$errors_loss_results" | head -1)"
+          errors_loss_max="$(echo "$errors_loss_results" | tail -1)"
         else
-          err_log_cnt="0"
+          errors_log_cnt="0"
         fi
-        # Gather PACKET-LOSS failures
-        pkt_fail_logs="$(ls -1 ${filter}_${pktloss}_fail* 2> /dev/null)"
-        if [ -n "$pkt_fail_logs" ] ; then
-          pkt_fail_log_cnt="$(echo "$pkt_fail_logs" | wc -l)"
-          pkt_fails="$(grep loss $pkt_fail_logs | cut -d',' -f3 | cut -d'%' -f1 | cut -d' ' -f2 | sort -nu)"
-          pkt_fail_min="$(echo "$pkt_fails" | head -1)"
-          pkt_fail_max="$(echo "$pkt_fails" | tail -1)"
+        # Gather PACKET-LOSS failure results
+        pktloss_fail_logs="$(ls -1 ${filter}_${pktloss_tag}_fail* 2> /dev/null)"
+        if [ -n "$pktloss_fail_logs" ] ; then
+          pktloss_fail_log_cnt="$(echo "$pktloss_fail_logs" | wc -l)"
+          pktloss_fails_results="$(grep loss $pktloss_fail_logs | cut -d',' -f3 | cut -d'%' -f1 | cut -d' ' -f2 | sort -nu)"
+          pktloss_fail_min="$(echo "$pktloss_fails_results" | head -1)"
+          pktloss_fail_max="$(echo "$pktloss_fails_results" | tail -1)"
         else
-          pkt_fail_log_cnt="0"
+          pktloss_fail_log_cnt="0"
         fi
         # Print summary results
-        if [ "$err_log_cnt" != "0" ] || [ "$pkt_fail_log_cnt" != "0" ] ; then
-          echo "$date_filter Results for 'ping_monitor.sh $src $dst'"
-          if [ "$err_log_cnt" != "0" ] ; then
-            echo -n "${errs}: $err_log_cnt logs, 100% packet loss ($err_min"
-            [ "$err_min" != "$err_max" ] && echo -n "-$err_max"
+        if [ "$errors_log_cnt" -gt "0" ] || [ "$pktloss_fail_log_cnt" -gt "0" ] ; then
+          let results_printed++
+          echo "'ping_monitor.sh $src $dst':"
+          if [ "$errors_log_cnt" -gt "0" ] ; then
+            echo -n "  ${errors_tag}: $errors_log_cnt logs, $errors_loss_min"
+            [ "$errors_loss_min" != "$errors_loss_max" ] && echo -n "-$errors_loss_max"
+            echo -n "% packet loss ($errors_min"
+            [ "$errors_min" != "$errors_max" ] && echo -n "-$errors_max"
             echo " errors)"
           fi
-          if [ "$pkt_fail_log_cnt" != "0" ] ; then
-            echo -n "${pktloss}: $pkt_fail_log_cnt logs, $pkt_fail_min"
-            [ "$pkt_fail_min" != "$pkt_fail_max" ] && echo -n "-$pkt_fail_max"
+          if [ "$pktloss_fail_log_cnt" -gt "0" ] ; then
+            echo -n "  ${pktloss_tag}: $pktloss_fail_log_cnt logs, $pktloss_fail_min"
+            [ "$pktloss_fail_min" != "$pktloss_fail_max" ] && echo -n "-$pktloss_fail_max"
             echo "% packet loss"
           fi
-          echo
         fi
       fi
     done
   done
+  [ "$results_printed" -eq "0" ] && echo "No Failures found!  :D"
+  echo
 done
