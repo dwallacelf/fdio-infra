@@ -19,6 +19,7 @@
 #  the specified date(s) or today if no dates are specified.
 #
 
+FDIO_INFRA_ROOT=${FDIO_INFRA_ROOT:-$(cd ..;pwd)}
 PING_MONITOR_ARCHIVE_DIR=${PING_MONITOR_ARCHIVE_DIR:-"$HOME/nomad-monitoring/ping-monitor-logs"}
 
 pktloss_tag="PACKET-LOSS"
@@ -42,6 +43,11 @@ verify_date() {
   fi
   return $rc
 }
+
+if [ ! -d "$FDIO_INFRA_ROOT/python" ] ; then
+  echo "ERROR: Invalid or missing FDIO_INFRA_ROOT environment variable!"
+  usage
+fi
 
 arch_dir=$PING_MONITOR_ARCHIVE_DIR
 if [ ! -d "$arch_dir" ] ; then
@@ -115,4 +121,12 @@ for date_filter in $dates ; do
   done
   [ "$results_printed" -eq "0" ] && echo "No Failures found!  :D"
   echo
+  echo "$date_filter Nomad Events"
+  echo "======================="
+  nomad_events="$($FDIO_INFRA_ROOT/python/nomad-client-events.py | grep $date_filter | sort)"
+  if [ -z "$nomad_events" ] ; then
+    echo "No Nomad Events Found!  :D"
+  else
+    echo "$nomad_events"
+  fi
 done
