@@ -123,7 +123,7 @@ for date_filter in $dates ; do
   echo
   echo "$date_filter Nomad Events"
   echo "======================="
-  nomad_events="$($FDIO_INFRA_ROOT/python/nomad-client-events.py | grep $date_filter | sort)"
+  nomad_events="$($FDIO_INFRA_ROOT/python/nomad_client_events.py | grep $date_filter | sort)"
   if [ -z "$nomad_events" ] ; then
     echo "No Nomad Events Found!  :D"
   else
