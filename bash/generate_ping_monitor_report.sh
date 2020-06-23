@@ -129,4 +129,5 @@ for date_filter in $dates ; do
   else
     echo "$nomad_events"
   fi
+  echo
 done
