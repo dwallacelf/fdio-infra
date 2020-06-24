@@ -54,6 +54,7 @@ for h in $hosts ; do
   get_hostname $h
   get_ip4_address $h
   echo "Ping Monitors on $hostname ($ip4addr):"
+  echo "======================================="
   ssh $user@$h ps -auxww | grep -v grep | grep ping_monitor.sh | awk -e '{printf "%s %s (pid %d)\n", $12, $13, $2}'
   echo
 done
