@@ -102,16 +102,16 @@ for date_filter in $dates ; do
         # Print summary results
         if [ "$errors_log_cnt" -gt "0" ] || [ "$pktloss_fail_log_cnt" -gt "0" ] ; then
           let results_printed++
-          echo "'ping_monitor.sh $src $dst':"
+          pm_src_dest="'ping_monitor.sh $src $dst'"
           if [ "$errors_log_cnt" -gt "0" ] ; then
-            echo -n "  ${errors_tag}: $errors_log_cnt logs, $errors_loss_min"
+            echo -n "$pm_src_dest $errors_tag: $errors_log_cnt logs, $errors_loss_min"
             [ "$errors_loss_min" != "$errors_loss_max" ] && echo -n "-$errors_loss_max"
             echo -n "% packet loss ($errors_min"
             [ "$errors_min" != "$errors_max" ] && echo -n "-$errors_max"
             echo " errors)"
           fi
           if [ "$pktloss_fail_log_cnt" -gt "0" ] ; then
-            echo -n "  ${pktloss_tag}: $pktloss_fail_log_cnt logs, $pktloss_fail_min"
+            echo -n "$pm_src_dest $pktloss_tag: $pktloss_fail_log_cnt logs, $pktloss_fail_min"
             [ "$pktloss_fail_min" != "$pktloss_fail_max" ] && echo -n "-$pktloss_fail_max"
             echo "% packet loss"
           fi
