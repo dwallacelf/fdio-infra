@@ -69,6 +69,15 @@ for date_filter in $dates ; do
   src_hosts="$(ls $arch_dir/*${date_filter}*.doc 2> /dev/null | cut -d'_' -f2 | sort -u)"
   dst_hosts="$(ls $arch_dir/*${date_filter}*.doc 2> /dev/null | cut -d'_' -f4 | sort -u)"
   results_printed=0
+  echo "$date_filter Nomad Events"
+  echo "======================="
+  nomad_events="$($FDIO_INFRA_ROOT/python/nomad_client_events.py | grep $date_filter | sort)"
+  if [ -z "$nomad_events" ] ; then
+    echo "No Nomad Events Found!  :D"
+  else
+    echo "$nomad_events"
+  fi
+  echo
   echo "$date_filter Ping Monitor Failure Summary"
   echo "======================================="
   for src in $src_hosts ; do
@@ -121,13 +130,15 @@ for date_filter in $dates ; do
   done
   [ "$results_printed" -eq "0" ] && echo "No Failures found!  :D"
   echo
-  echo "$date_filter Nomad Events"
-  echo "======================="
-  nomad_events="$($FDIO_INFRA_ROOT/python/nomad_client_events.py | grep $date_filter | sort)"
-  if [ -z "$nomad_events" ] ; then
-    echo "No Nomad Events Found!  :D"
-  else
-    echo "$nomad_events"
-  fi
+  echo "$date_filter Ping Monitor Failures Details"
+  echo "========================================"
+  while IFS= read -r result; do
+    src_host="$(echo $result | cut -d'_' -f2)"
+    dst_host="$(echo $result | cut -d'_' -f4)"
+    date_time="$(echo $result | cut -d'_' -f5)"
+    time="${date_time:11:2}:${date_time:13:2}:${date_time:15}"
+    stats="$(echo $result | cut -d':' -f2)"
+    echo "$time $src_host $dst_host: $stats"
+  done <<< "$(cd $arch_dir; grep loss *${date_filter}*_fail*)"
   echo
 done
