@@ -50,3 +50,4 @@ while [ -n "$1" ] ; do
     ssh $dest_host "rm -f $log_files"
   fi
 done
+echo
