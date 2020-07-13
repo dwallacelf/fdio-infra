@@ -128,17 +128,20 @@ for date_filter in $dates ; do
       fi
     done
   done
-  [ "$results_printed" -eq "0" ] && echo "No Failures found!  :D"
-  echo
-  echo "$date_filter Ping Monitor Failures Details"
-  echo "========================================"
-  while IFS= read -r result; do
-    src_host="$(echo $result | cut -d'_' -f2)"
-    dst_host="$(echo $result | cut -d'_' -f4)"
-    date_time="$(echo $result | cut -d'_' -f5)"
-    time="${date_time:11:2}:${date_time:13:2}:${date_time:15}"
-    stats="$(echo $result | cut -d':' -f2)"
-    echo "$time $src_host $dst_host: $stats"
-  done <<< "$(cd $arch_dir; grep loss *${date_filter}*_fail*)"
+  if [ "$results_printed" -eq "0" ] ; then
+    echo "No Failures found!  :D"
+  else
+    echo
+    echo "$date_filter Ping Monitor Failures Details"
+    echo "========================================"
+    while IFS= read -r result; do
+      src_host="$(echo $result | cut -d'_' -f2)"
+      dst_host="$(echo $result | cut -d'_' -f4)"
+      date_time="$(echo $result | cut -d'_' -f5)"
+      time="${date_time:11:2}:${date_time:13:2}:${date_time:15}"
+      stats="$(echo $result | cut -d':' -f2)"
+      echo "$time $src_host $dst_host: $stats"
+    done <<< "$(cd $arch_dir; grep -H loss *${date_filter}*_fail*)"
+  fi
   echo
 done
