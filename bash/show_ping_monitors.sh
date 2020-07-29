@@ -18,6 +18,8 @@
 #  Output the running ping monitor scripts on the hosts specified
 #  or localhost if none specified.
 
+set -euo pipefail
+
 usage() {
   echo "Usage: $0  [-u <user name>] [<remote host> [... <remote host>]]"
   exit 1
@@ -33,8 +35,8 @@ fi
 ip4addr=""
 get_ip4_address() {
   ip4addr=$(ssh $user@$1 'ip address show up primary' \
-    | grep inet | grep -v inet6 | grep -v 127 \
-    | awk -e '{print $2}' | head -1 | cut -d'/' -f1)
+    | grep 'inet ' | grep -ve 127 -e 172 -e lxcbr \
+    | mawk '{print $2}' | head -1 | cut -d'/' -f1)
   if [ "$?" -ne "0" ] ; then
     echo "ERROR: unable to obtain ip address from '$user@$1'!"
     usage
@@ -55,6 +57,6 @@ for h in $hosts ; do
   get_ip4_address $h
   echo "Ping Monitors on $hostname ($ip4addr):"
   echo "======================================="
-  ssh $user@$h ps -auxww | grep -v grep | grep ping_monitor.sh | awk -e '{printf "%s %s (pid %d)\n", $12, $13, $2}'
+  ssh $user@$h ps -auxww | grep -v grep | grep ping_monitor.sh | mawk '{printf "%s %s (pid %d)\n", $12, $13, $2}' | sort -d
   echo
 done
