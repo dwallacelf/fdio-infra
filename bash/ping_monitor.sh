@@ -43,6 +43,8 @@
 #  The following grep commands are useful in reviewing status of
 #  ls -l /tmp/ping*.doc  # show all logs with issues
 
+set -euo pipefail
+
 count=60
 ping_opts="-DOc"
 ping_cmd="ping $ping_opts $count $1"
@@ -50,6 +52,9 @@ token_file="$HOME/.ssh/secret_webex_teams_access_token"
 pktloss="PACKET-LOSS"
 errs="ERRORS"
 dest="$1"
+logfile=""
+prev_logfile=""
+SECRET_WEBEX_TEAMS_ACCESS_TOKEN=${SECRET_WEBEX_TEAMS_ACCESS_TOKEN:-""}
 
 if [ -z "$dest" ] ; then
   echo "Usage: $0 <destination>"
@@ -79,6 +84,7 @@ send_notify() {
 ping_mon_exit() {
   echo
   check_for_pkt_loss
+  rm -f $logfile $prev_logfile
   echo
   echo "So long and thanks for watching :D"
   exit 0
