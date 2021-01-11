@@ -48,13 +48,12 @@ set -euo pipefail
 count=60
 ping_opts="-DOc"
 ping_cmd="ping $ping_opts $count $1"
-token_file="$HOME/.ssh/secret_webex_teams_access_token"
 pktloss="PACKET-LOSS"
 errs="ERRORS"
 dest="$1"
 logfile=""
 prev_logfile=""
-SECRET_WEBEX_TEAMS_ACCESS_TOKEN=${SECRET_WEBEX_TEAMS_ACCESS_TOKEN:-""}
+horizontal_rule="\n-------------------------------------------\n"
 
 if [ -z "$dest" ] ; then
   echo "Usage: $0 <destination>"
@@ -69,30 +68,27 @@ if [[ ! "$ping_test" =~ .*"ping statistics".* ]] ; then
   exit 1
 fi
 
-[ -z "$SECRET_WEBEX_TEAMS_ACCESS_TOKEN" ] && [ -f "$token_file" ] && source $token_file
-[ -z "$SECRET_WEBEX_TEAMS_ACCESS_TOKEN" ] && echo "Warning: Missing SECRET_WEBEX_TEAMS_ACCESS_TOKEN envvar!"
-
-send_notify() {
-  if [ -z "$SECRET_WEBEX_TEAMS_ACCESS_TOKEN" ] ; then
-    echo "Warning: Missing SECRET_WEBEX_TEAMS_ACCESS_TOKEN envvar!"
-    return
-  fi
-  SECRET_WEBEX_TEAMS_ROOM_ID='Y2lzY29zcGFyazovL3VzL1JPT00vMDZlY2I0ODAtNzgwZi0xMWVhLWE1YzItNDExYzJmODZmMDlm'
-  curl https://api.ciscospark.com/v1/messages -X POST -H "Authorization: Bearer ${SECRET_WEBEX_TEAMS_ACCESS_TOKEN}" -H "Content-Type: application/json" --data '{"roomId":"'${SECRET_WEBEX_TEAMS_ROOM_ID}'", "markdown": "'"${WEBEX_TEAMS_MESSAGE}"'" }'
-}
+notify_webex_teams_script="$(dirname $BASH_SOURCE)/lib_notify_webex_teams.sh"
+if [ ! -f "$notify_webex_teams_script" ] ; then
+    echo "ERROR: '$notify_webex_teams_script' is missing!"
+    echo "  $(basename $BASH_SOURCE) must be run from cloned workspace."
+    exit 1
+else
+    source "$notify_webex_teams_script"
+fi
 
 ping_mon_exit() {
   echo
   check_for_pkt_loss
   rm -f $logfile $prev_logfile
-  echo
-  echo "So long and thanks for watching :D"
+  echo -e "$horizontal_rule\nSo long and thanks for watching! :D"
   exit 0
 }
 
 trap ping_mon_exit SIGHUP SIGINT SIGQUIT SIGABRT SIGKILL SIGALRM SIGTERM
 
 check_for_pkt_loss() {
+  WEBEX_TEAMS_MESSAGE=""
   if [ -n "$(grep ', 0% packet loss,' $logfile)" ] ; then
     echo "All is well in $logfile !"
     return
@@ -119,7 +115,6 @@ check_for_pkt_loss() {
     local errors_tag="${errs}_fail"
     local errors_today="$(ls -1 $today_prefix* | grep ${errors_tag} | wc -l)"
     WEBEX_TEAMS_MESSAGE="FAILURE DETECTED: $failure_detected on $host ($errors_today ${errors_tag}.doc, $pktloss_today ${pktloss_tag}.doc logs today): $save_logfile"
-    echo "$WEBEX_TEAMS_MESSAGE"
     send_notify
   else
     echo "WARNING: ${percent_pktloss}% PACKET LOSS DETECTED on $host: $save_logfile"
@@ -132,6 +127,7 @@ while true; do
   today_prefix="/tmp/ping-monitor_${host}_$$_$dest"
   logfile="${today_prefix}_$timestamp"
 
+  echo -e $horizontal_rule
   echo "Pinging from $host to $1 with $count packets starting @ $timestamp..."
   echo -e "$host: started '$ping_cmd' at $timestamp\n-" > $logfile
   $ping_cmd >> $logfile
