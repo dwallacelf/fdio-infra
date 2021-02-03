@@ -49,6 +49,7 @@ count=60
 ping_opts="-DOc"
 ping_cmd="ping $ping_opts $count $1"
 pktloss="PACKET-LOSS"
+badhostname="BAD-HOSTNAME"
 errs="ERRORS"
 dest="$1"
 logfile=""
@@ -64,6 +65,11 @@ fi
 ping_test=$(ping $ping_opts 1 localhost 2>&1)
 if [[ ! "$ping_test" =~ .*"ping statistics".* ]] ; then
   echo "Error: ping options ($ping_opts) not supported by $(which ping)!"
+  echo "$ping_test"
+  exit 1
+fi
+ping_test=$(ping $ping_opts 1 $dest 2>&1)
+if [[ ! "$ping_test" =~ .*"ping statistics".* ]] ; then
   echo "$ping_test"
   exit 1
 fi
@@ -103,9 +109,14 @@ check_for_pkt_loss() {
     failure_detected="$num_errors PING ERRORS"
   else
     percent_pktloss="$(grep loss $logfile | cut -d',' -f3 | cut -d'%' -f1 | cut -d' ' -f2)"
-    if [ "$(echo $percent_pktloss | cut -d. -f1)" -ge "10" ] ; then
-      failure_detected="${percent_pktloss}% PACKET LOSS"
-      save_logfile="${logfile}_${pktloss}_fail.doc"
+    if [ -z "$percent_pktloss" ] ; then
+	failure_detected="Bad hostname"
+	save_logfile="${logfile}_${badhostname}_fail.doc"
+    else
+      if [ "$(echo $percent_pktloss | cut -d. -f1)" -ge "10" ] ; then
+        failure_detected="${percent_pktloss}% PACKET LOSS"
+        save_logfile="${logfile}_${pktloss}_fail.doc"
+      fi
     fi
   fi
   mv $logfile $save_logfile
