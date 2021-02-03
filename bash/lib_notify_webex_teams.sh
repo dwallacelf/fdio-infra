@@ -18,8 +18,6 @@
 #  This script is a library intended only for inclusion in other scripts.
 #  It sends notifications to a WebEx Teams space.
 
-set -euo pipefail
-
 webex_token_file=${webex_token_file:-"$HOME/.ssh/secret_webex_teams_access_token"}
 SECRET_WEBEX_TEAMS_ACCESS_TOKEN=${SECRET_WEBEX_TEAMS_ACCESS_TOKEN:-""}
 
@@ -42,10 +40,12 @@ send_notify() {
   fi
 
   # Don't abort script if curl command fails
+  set_opts="$-"
   set +e
   curl https://api.ciscospark.com/v1/messages -X POST -H "Authorization: Bearer ${SECRET_WEBEX_TEAMS_ACCESS_TOKEN}" -H "Content-Type: application/json" --data '{"roomId":"'${SECRET_WEBEX_TEAMS_ROOM_ID}'", "markdown": "'"${WEBEX_TEAMS_MESSAGE}"'" }'
   if [ "$?" !=  "0" ] ; then
       echo -e "\nWARNING: Send notify message failed!"
   fi
-  set -e
+  # Restore -e if it was previously set
+  grep -q e <<<$set_opts && set -e
 }

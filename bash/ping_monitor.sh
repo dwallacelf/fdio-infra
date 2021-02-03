@@ -43,7 +43,7 @@
 #  The following grep commands are useful in reviewing status of
 #  ls -l /tmp/ping*.doc  # show all logs with issues
 
-set -euo pipefail
+set -uo pipefail
 
 count=60
 ping_opts="-DOc"
