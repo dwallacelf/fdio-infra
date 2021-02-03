@@ -103,7 +103,7 @@ check_for_pkt_loss() {
     failure_detected="$num_errors PING ERRORS"
   else
     percent_pktloss="$(grep loss $logfile | cut -d',' -f3 | cut -d'%' -f1 | cut -d' ' -f2)"
-    if [ "$percent_pktloss" -ge "10" ] ; then
+    if [ "$(echo $percent_pktloss | cut -d. -f1)" -ge "10" ] ; then
       failure_detected="${percent_pktloss}% PACKET LOSS"
       save_logfile="${logfile}_${pktloss}_fail.doc"
     fi
