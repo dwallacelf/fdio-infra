@@ -56,7 +56,7 @@ if [ ! -d "$arch_dir" ] ; then
 fi
 
 if [ "$#" -eq "0" ] ; then
-  dates="$(date +%Y-%m-%d)"
+  dates="$(date -u +%Y-%m-%d)"
 else
   dates="$@"
 fi

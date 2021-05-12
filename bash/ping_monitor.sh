@@ -134,7 +134,7 @@ check_for_pkt_loss() {
 
 host="$(hostname)"
 while true; do
-  timestamp=$(date +%Y-%m-%d-%H%M%S)
+  timestamp=$(date -u +%Y-%m-%d-%H%M%S)
   today_prefix="/tmp/ping-monitor_${host}_$$_$dest"
   logfile="${today_prefix}_$timestamp"
 

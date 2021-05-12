@@ -120,7 +120,7 @@ get_ansible_config() {
         fi;
     done
     ansible_config[clients_ip]="${ansible_config[clients_ip]:1}"
-    
+
     # gather nomad servers (nomad_node_role == 'server' or 'both')
     for host in *.yaml ; do
         if [ -n "$(grep nomad_node_role $host | grep -v client)" ] ; then
@@ -130,7 +130,7 @@ get_ansible_config() {
     ansible_config[servers_ip]="${ansible_config[servers_ip]:1}"
     popd >/dev/null
 }
-        
+
 import_config() {
     set +e
     local host_vars_config="$(grep nomad_node_role $ANSIBLE_HOST_VARS_DIR/*.yaml 2>/dev/null)"
@@ -153,7 +153,7 @@ import_config() {
 }
 
 checkpoint_data() {
-    NOMAD_CHANGED_FILE="${NOMAD_CHECKPOINT_FILE::-3}-$(date +%Y-%m-%d-%H%M%S).CHANGED"
+    NOMAD_CHANGED_FILE="${NOMAD_CHECKPOINT_FILE::-3}-$(date -u +%Y-%m-%d-%H%M%S).CHANGED"
     local checkpoint_time="$(date -u)"
     echo -e "\nCheckpointing data at $checkpoint_time to\n$NOMAD_CHECKPOINT_FILE..."
     cat >$NOMAD_CHECKPOINT_FILE <<EOF
@@ -210,7 +210,7 @@ verify_oper_data() {
     WEBEX_TEAMS_MESSAGE=""
 
     echo -e "\nVerifying Nomad/Consul operational data..."
-    
+
     # Verify Nomad Clients
     if [ "${ansible_config[clients_ip]}" != "${nomad_oper[clients_ip]}" ] ; then
         WEBEX_TEAMS_MESSAGE="$WEBEX_TEAMS_MESSAGE\nNomad Client List Changed!"
@@ -218,7 +218,7 @@ verify_oper_data() {
            [ "${nomad_oper[prev_clients]}" != "${nomad_oper[clients]}" ] ; then
         WEBEX_TEAMS_MESSAGE="$WEBEX_TEAMS_MESSAGE\nNomad Client Attributes Changed!"
     fi
-    
+
     # Verify Nomad Servers
     if [ "${ansible_config[servers_ip]}" != "${nomad_oper[servers_ip]}" ] ; then
         WEBEX_TEAMS_MESSAGE="$WEBEX_TEAMS_MESSAGE\nNomad Server List Changed!}"

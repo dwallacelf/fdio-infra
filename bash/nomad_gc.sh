@@ -28,7 +28,7 @@ fi
 set -euo pipefail
 
 while true; do
-   echo "##### $(date): Sleep $sleep_interval #####"
+   echo "##### $(date -u): Sleep $sleep_interval #####"
    sleep $sleep_interval
    cleanup_required="$(nomad status | grep batch | grep dead || true)"
    echo -e "Dead Executors:\n---- %< ----\n$cleanup_required\n---- %< ----"
@@ -36,5 +36,5 @@ while true; do
        echo "Running Nomad Garbage Collection"
        nomad system gc
   fi
-  echo -e "####################\n" 
+  echo -e "####################\n"
 done
