@@ -33,10 +33,10 @@ class MtrReport:
 class MtrEndpoint:
     ip_addr: str
     metrics: WorstCaseMetrics
-    data_dir: str = '/tmp'
+    filename: str = ''
     report: List[MtrReport] = field(default_factory=list)
 
-    def get_mtr_results(self, start=None):
+    def new_mtr_results(self, start=None):
         if not start:
             self.start = start_timestamp()
         mtr_cmd = ['mtr', '-jnT', f'{self.ip_addr}']
@@ -45,14 +45,18 @@ class MtrEndpoint:
         report = MtrReport(self.start, Dict(json.loads(results)).report)
         self.report.append(report)
 
-    def append_to_file(self, data_dir = '/tamp'):
-        filename = f'{self.data_dir}/dpmon-{self.ip_addr}.json'
+    def import_from_file(self, data_dir = '/tmp'):
+        # TODO: import json file
+        pass
+
+    def write_to_file(self, data_dir = '/tmp'):
+        filename = f'{data_dir}/dpmon-{self.ip_addr}.json'
+        # TODO: write json file
 
     def gather_worst_case_metrics(self):
         self.metrics.start = self.report[0].stamp
         for i, rpt in enumerate(self.report):
             for j, hub in enumerate(self.report[i].results.hubs):
-                print(f'DAW: j = {j}, {len(self.metrics.hubs)}')
                 if len(self.metrics.hubs) == j:
                     self.metrics.hubs.append(hub)
                 elif Decimal(hub.Wrst) <= Decimal(self.metrics.hubs[j].Wrst):
@@ -69,7 +73,7 @@ def main():
     # TODO: argparse args
 
     ingress_ext = MtrEndpoint('162.253.54.31', WorstCaseMetrics(None, None, []))
-    ingress_ext.get_mtr_results()
+    ingress_ext.new_mtr_results()
     ingress_ext.gather_worst_case_metrics()
     pprint(ingress_ext.metrics)
 
